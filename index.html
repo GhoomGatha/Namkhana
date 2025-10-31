@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Namkhana 33/11 kV Sub Station — Reports (v1.9.27f)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Namkhana 33/11 kV Sub Station — Reports (v1.9.3)</title>
 
-<!-- External libraries (CDN) -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
-<!-- Local Styles -->
 <link rel="stylesheet" href="style.css">
-</head>
 
+</head>
 <body>
 <header>
   <h1>Namkhana 33/11 kV Sub Station</h1>
@@ -24,8 +22,8 @@
 <div id="last-login">Not logged in</div>
 
 <div class="container">
-  <!-- LOGIN -->
-  <div id="login-screen" class="card" role="region" aria-label="Login" style="max-width:460px;margin:60px auto;text-align:center">
+  <div id="login-screen" class="card" role="region" aria-label="Login" 
+       style="max-width:460px;margin:60px auto;text-align:center">
     <h2 style="margin:0 0 12px 0">Welcome 🙏 Please Login to continue</h2>
     <div style="display:flex;gap:12px;justify-content:center">
       <button id="operator-login-btn" class="btn btn-primary">Operator Login</button>
@@ -69,7 +67,6 @@
     </div>
   </div>
 
-  <!-- APP -->
   <div id="app" style="display:none">
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
@@ -84,23 +81,326 @@
 
     <nav class="main-tabs" role="tablist">
       <div class="main-tab active" data-tab="monthly">📑 Monthly System Reports</div>
-      <div class="main-tab" data-tab="yearly">📅 Yearly System Reports</div>
-      <div class="main-tab" data-tab="feeders-analytics">⚡ Feeders Analytics</div>
+      <div class="main-tab" data-tab="yearly">📅 Yearly Peak Load & Voltage</div>
       <div class="main-tab" data-tab="equipment">🛠️ Equipment Register</div>
     </nav>
 
-    <!-- Sections (Monthly, Yearly, Feeders, Equipment) -->
-    <!-- Everything else is handled by script.js -->
-    
-    <footer style="text-align:center;margin-top:12px" class="small">
-      © 2025 WBSEDCL Kakdwip Division — Namkhana Sub Station
-    </footer>
+    <section id="monthly" class="card tab-content" role="region">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-weight:800">Monthly System Reports</div>
+        <div style="margin-left:auto" class="save-menu">
+          <button id="save-all-btn" class="btn btn-primary">💾 Save All ▼</button>
+          <div id="save-all-options" class="save-options" aria-hidden="true">
+            <button data-mode="pdf">Save All as PDF (combined)</button>
+            <button data-mode="xlsx">Save All as XLSX (4 sheets)</button>
+            <hr/>
+            <button data-mode="all">Save All (PDF + XLSX)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-tabs" role="tablist" style="margin-top:10px">
+        <div class="sub-tab active" data-sub="interruption">⚡ Interruption</div>
+        <div class="sub-tab" data-sub="meter">🔌 Secure Meter</div>
+        <div class="sub-tab" data-sub="peak">📈 Peak Load (A)</div>
+        <div class="sub-tab" data-sub="vminmax">📊 Max & Min Voltage</div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <label>Start Date: <input type="date" id="period-start" style="padding:8px;border-radius:6px;border:1px solid #ccc"></label>
+        <label>End Date: <input type="date" id="period-end" style="padding:8px;border-radius:6px;border:1px solid #ccc"></label>
+        <button id="reset-period" class="btn btn-ghost">🔄 Reset to Last Month</button>
+        <div class="small" style="margin-left:auto">Default: previous month — editable</div>
+      </div>
+
+      <div id="subpanels" style="margin-top:12px">
+        <div id="panel-interruption" class="subpanel card" style="display:block">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">⚡ Interruption Report</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="inter-add" class="btn btn-primary">+ Add Row</button>
+              <button id="inter-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="inter-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="interruption">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="interruption">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="interruption">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-inter">
+              <thead>
+                <tr>
+                  <th>Sl. No.</th><th>Feeder</th><th>Transient Nos</th><th>Transient Min</th>
+                  <th>Sustained Nos</th><th>Sustained Min</th><th>Planned Nos</th><th>Planned Min</th>
+                  <th>Emergency Nos</th><th>Emergency Min</th><th>Total Outage (Min)</th><th>Availability %</th><th>Remarks</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="14" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div id="inter-note" class="signature"></div>
+        </div>
+
+        <div id="panel-meter" class="subpanel card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">🔌 Secure Meter Reading</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="meter-add" class="btn btn-primary">+ Add Row</button>
+              <button id="meter-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="meter-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="meter">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="meter">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="meter">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-meter">
+              <thead>
+                <tr><th>Sl. No.</th><th>Feeder</th><th>Start Reading</th><th>End Reading</th><th>Advance</th><th>M.F.</th><th>Total Unit</th><th>Remarks</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="9" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="meter-note"></div>
+        </div>
+
+        <div id="panel-peak" class="subpanel card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">📈 Peak Load (A)</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="peak-add" class="btn btn-primary">+ Add Row</button>
+              <button id="peak-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="peak-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="peak">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="peak">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="peak">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-peak">
+              <thead><tr><th>Sl. No.</th><th>Feeder</th><th>Peak Load (A)</th><th>Date</th><th>Time</th><th>Remarks</th><th></th></tr></thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="7" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="peak-note"></div>
+        </div>
+
+        <div id="panel-vminmax" class="subpanel card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">📊 Max & Min Voltage</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="vm-add" class="btn btn-primary">+ Add Row</button>
+              <button id="vm-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="vm-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="vminmax">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="vminmax">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="vminmax">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-vm">
+              <thead><tr><th>Sl. No.</th><th>Feeder</th><th>Max Voltage (kV)</th><th>Date</th><th>Time</th><th>Min Voltage (kV)</th><th>Date</th><th>Time</th><th>Remarks</th><th></th></tr></thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="10" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="vm-note"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="yearly" class="card tab-content" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-weight:800">Yearly Peak Load & Voltage</div>
+        <div style="margin-left:12px">
+          <label class="small">Year:
+            <select id="year-select" style="padding:7px;border-radius:6px;border:1px solid #ccc"></select>
+          </label>
+        </div>
+        <div style="margin-left:auto" class="save-menu">
+          <button id="save-yearly-all-btn" class="btn btn-primary">💾 Save All (Yearly) ▼</button>
+          <div id="save-yearly-all-options" class="save-options" aria-hidden="true">
+            <button data-mode="pdf">Save Yearly as PDF (combined)</button>
+            <button data-mode="xlsx">Save Yearly as XLSX (2 sheets)</button>
+            <hr/>
+            <button data-mode="all">Save All (PDF + XLSX)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-tabs" role="tablist" style="margin-top:10px">
+        <div class="sub-tab active" data-yearsub="y-inter">⚡ Interruption</div>
+        <div class="sub-tab" data-yearsub="y-meter">🔌 Secure Meter</div>
+        <div class="sub-tab" data-yearsub="y-peak">📈 Peak Load</div>
+        <div class="sub-tab" data-yearsub="y-vminmax">📊 Max & Min Voltage</div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button id="yearly-recalc" class="btn btn-ghost">🔄 Recalculate Yearly from Monthly</button>
+        <div class="small" style="margin-left:auto">Auto-updates from Monthly entries and saves</div>
+      </div>
+
+      <div id="yearly-panels" style="margin-top:12px">
+        <div id="panel-y-inter" class="subpanel card" style="display:block">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Yearly — Interruption</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="y-inter-add" class="btn btn-primary">+ Add Row</button>
+              <button id="y-inter-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="y-inter-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary y-sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options y-sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="y-inter">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="y-inter">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="y-inter">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-yearly-inter">
+              <thead>
+                <tr>
+                  <th>Sl. No.</th><th>Feeder</th><th>Transient Nos</th><th>Transient Min</th>
+                  <th>Sustained Nos</th><th>Sustained Min</th><th>Planned Nos</th><th>Planned Min</th>
+                  <th>Emergency Nos</th><th>Emergency Min</th><th>Total Outage (Min)</th><th>Availability %</th><th>Remarks</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="14" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="y-inter-note"></div>
+        </div>
+
+        <div id="panel-y-meter" class="subpanel card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Yearly — Secure Meter</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="y-meter-add" class="btn btn-primary">+ Add Row</button>
+              <button id="y-meter-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="y-meter-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary y-sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options y-sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="y-meter">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="y-meter">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="y-meter">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-yearly-meter">
+              <thead>
+                <tr><th>Sl. No.</th><th>Feeder</th><th>Start Reading</th><th>End Reading</th><th>Advance</th><th>M.F.</th><th>Total Unit</th><th>Remarks</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="9" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="y-meter-note"></div>
+        </div>
+
+        <div id="panel-y-peak" class="subpanel card" style="display:block">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Yearly — Peak Load</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="y-peak-add" class="btn btn-primary">+ Add Row</button>
+              <button id="y-peak-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="y-peak-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary y-sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options y-sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="y-peak">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="y-peak">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="y-peak">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-yearly-peak">
+              <thead><tr><th>Sl. No.</th><th>Feeder</th><th>Peak Load (A)</th><th>Date</th><th>Time</th><th>Remarks</th><th></th></tr></thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="7" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="y-peak-note"></div>
+        </div>
+
+        <div id="panel-y-vminmax" class="subpanel card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Yearly — Max & Min Voltage</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="y-vm-add" class="btn btn-primary">+ Add Row</button>
+              <button id="y-vm-clear" class="btn btn-ghost">Clear Data</button>
+              <button id="y-vm-save" class="btn btn-ghost">💾 Save Draft</button>
+              <div class="save-menu"><button class="btn btn-primary y-sub-save-toggle">💾 Save ▼</button>
+                <div class="save-options y-sub-save-options" aria-hidden="true">
+                  <button data-save="pdf" data-sub="y-vminmax">Save as PDF</button>
+                  <button data-save="xlsx" data-sub="y-vminmax">Save as XLSX</button>
+                  <hr/>
+                  <button data-save="all" data-sub="y-vminmax">Save All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap" tabindex="0">
+            <table id="table-yearly-vm">
+              <thead><tr><th>Sl. No.</th><th>Feeder</th><th>Max Voltage (kV)</th><th>Date</th><th>Time</th><th>Min Voltage (kV)</th><th>Date</th><th>Time</th><th>Remarks</th><th></th></tr></thead>
+              <tbody></tbody>
+              <tfoot><tr class="note-row"><td colspan="10" contenteditable="true">Special Notes: </td></tr></tfoot>
+            </table>
+          </div>
+          <div class="signature" id="y-vm-note"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="equipment" class="card tab-content" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-weight:700">🛠️ Equipment Register</div>
+      </div>
+      <div class="table-wrap">
+        <table id="table-equip" style="margin-top:10px">
+          <thead><tr><th>Equipment</th><th>ID/Tag</th><th>Rating/Spec</th><th>Location</th><th>Status</th><th>Remarks</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer style="text-align:center;margin-top:12px" class="small">© 2025 WBSEDCL Kakdwip Division — Namkhana Sub Station</footer>
   </div>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
-<!-- Local Script -->
 <script src="script.js"></script>
+
 </body>
 </html>
